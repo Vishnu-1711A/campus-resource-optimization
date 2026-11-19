@@ -1,8 +1,8 @@
 # Campus Resource Optimization System
 ### PES University — DBMS Course Project
 **Contributors:**  
-- **Battu Rohith** (`PES2UG24CS264`)  
-- **Prateek Sharma** (`PES2UG24CS283`)  
+- **M.Vishnu Vardhan Naidu** (`PES2UG24CS264`)  
+- **Mohith Kumar Battu** (`PES2UG24CS283`)  
 
 ---
 
