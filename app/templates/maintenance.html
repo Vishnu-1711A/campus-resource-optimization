@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance & Work Orders{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1>Maintenance & Asset Service Orders</h1>
+        <p>Log equipment faults, prioritize repairs, and automatically sync asset availability status.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('newMaintenanceModal')">+ Report Issue</button>
+</div>
+
+<!-- Search & Filtering Toolbar -->
+<div style="background: white; padding: 1rem 1.25rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center;">
+    <input type="text" id="maintSearch" class="form-control" style="max-width: 320px;" placeholder="Search issue, resource, technician..." onkeyup="filterTable('maintSearch', 'maintTable')">
+</div>
+
+<!-- Maintenance Work Orders Table -->
+<div class="table-container">
+    <div class="table-header-bar">
+        <h3>Work Orders Ledger ({{ maintenance_records|length }} Tickets)</h3>
+    </div>
+    <table id="maintTable">
+        <thead>
+            <tr>
+                <th>Ticket ID</th>
+                <th>Asset / Resource</th>
+                <th>Reported Issue</th>
+                <th>Priority</th>
+                <th>Reported By</th>
+                <th>Reported On</th>
+                <th>Status</th>
+                <th>Resolution Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in maintenance_records %}
+            <tr>
+                <td>#{{ m.maintenance_id }}</td>
+                <td><strong>{{ m.resource_name }}</strong></td>
+                <td style="max-width: 280px;">{{ m.issue }}</td>
+                <td><span class="badge badge-{{ m.priority|lower }}">{{ m.priority }}</span></td>
+                <td>{{ m.reporter_name }}</td>
+                <td>{{ m.reported_on }}</td>
+                <td><span class="badge badge-{{ m.status|lower }}">{{ m.status }}</span></td>
+                <td>{{ m.resolved_on or 'Pending' }}</td>
+                <td>
+                    {% if m.status in ['OPEN', 'IN_PROGRESS'] %}
+                    <form method="POST" action="/maintenance/resolve/{{ m.maintenance_id }}" style="display: inline;">
+                        <button type="submit" class="btn btn-success btn-sm">Resolve</button>
+                    </form>
+                    {% else %}
+                    <span style="color: var(--success); font-weight: 600; font-size: 0.85rem;">✓ Closed</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal: New Maintenance Issue -->
+<div class="modal" id="newMaintenanceModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Raise Maintenance Ticket</h3>
+            <button class="close-btn" onclick="closeModal('newMaintenanceModal')">&times;</button>
+        </div>
+        <form method="POST" action="/maintenance/report">
+            <div class="form-group">
+                <label for="resource_id">Affected Resource</label>
+                <select id="resource_id" name="resource_id" class="form-control" required>
+                    {% for r in resources %}
+                        <option value="{{ r.resource_id }}">{{ r.resource_name }} ({{ r.building }} - {{ r.room_no }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Reported By</label>
+                <input type="text" class="form-control" value="{{ current_user.name }} ({{ current_user.role }})" disabled>
+            </div>
+            <div class="form-group">
+                <label for="priority">Issue Priority</label>
+                <select id="priority" name="priority" class="form-control" required>
+                    <option value="LOW">LOW - Non-critical aesthetic/minor flaw</option>
+                    <option value="MEDIUM" selected>MEDIUM - Partial impairment</option>
+                    <option value="HIGH">HIGH - Major outage (Auto-locks asset)</option>
+                    <option value="CRITICAL">CRITICAL - Severe hazard / offline (Auto-locks asset)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="issue">Detailed Problem Description</label>
+                <textarea id="issue" name="issue" class="form-control" rows="3" placeholder="Describe the fault, symptoms, and urgency..." required></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('newMaintenanceModal')">Cancel</button>
+                <button type="submit" class="btn btn-danger">File Ticket</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

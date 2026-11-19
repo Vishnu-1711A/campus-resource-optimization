@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Interactive SQL Runner{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1>Interactive SQL Runner & Query Lab</h1>
+        <p>Direct SQL terminal for evaluators and administrators to inspect relations, run custom queries, and test integrity rules.</p>
+    </div>
+</div>
+
+<div class="table-container" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <form method="POST" action="/sql-runner">
+        <div class="form-group">
+            <label for="raw_query" style="font-weight: 700; color: var(--primary-dark);">Enter SQL Command (SELECT, INSERT, UPDATE, EXPLAIN...)</label>
+            <textarea id="raw_query" name="raw_query" class="form-control sql-box" style="height: 120px; font-size: 0.95rem;" placeholder="e.g. SELECT * FROM resource WHERE status = 'AVAILABLE';">{{ query_text }}</textarea>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setQuery('SELECT * FROM resource LIMIT 10;')">Sample: Resources</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setQuery('SELECT * FROM booking WHERE status = \'CONFIRMED\';')">Sample: Confirmed Bookings</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setQuery('SELECT * FROM booking_audit ORDER BY changed_at DESC;')">Sample: Audit Log</button>
+            </div>
+            <button type="submit" class="btn btn-primary">⚡ Execute Query</button>
+        </div>
+    </form>
+</div>
+
+{% if query_error %}
+<div class="alert alert-error">
+    <strong>Execution Error:</strong> {{ query_error }}
+</div>
+{% endif %}
+
+{% if query_result is not none %}
+<div class="table-container">
+    <div class="table-header-bar">
+        <h3>Query Results ({% if query_result %}{{ query_result|length }} rows{% else %}0 rows / non-query completed{% endif %})</h3>
+    </div>
+    {% if query_result and query_result|length > 0 %}
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    {% for col in query_result[0].keys() %}
+                        <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in query_result %}
+                <tr>
+                    {% for val in row.values() %}
+                        <td>{{ val if val is not none else 'NULL' }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding: 1.5rem; color: var(--text-muted); font-style: italic;">
+        Query executed successfully. Either 0 records matched, or a non-SELECT statement was executed.
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setQuery(sql) {
+    document.getElementById('raw_query').value = sql;
+}
+</script>
+{% endblock %}

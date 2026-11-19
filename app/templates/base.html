@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Campus Resource Optimization System{% endblock %} - PES University</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- Primary Navigation Bar -->
+    <nav class="navbar">
+        <a href="/" class="nav-brand">
+            <span>🏛️ Campus Resource Optimization</span>
+            <span class="brand-badge">PESU DBMS</span>
+        </a>
+        {% if current_user %}
+        <div class="nav-links">
+            <a href="/" class="{% if active_tab == 'dashboard' %}active{% endif %}">Dashboard</a>
+            <a href="/resources" class="{% if active_tab == 'resources' %}active{% endif %}">Resources</a>
+            <a href="/bookings" class="{% if active_tab == 'bookings' %}active{% endif %}">Bookings</a>
+            <a href="/allocations" class="{% if active_tab == 'allocations' %}active{% endif %}">Allocations</a>
+            <a href="/maintenance" class="{% if active_tab == 'maintenance' %}active{% endif %}">Maintenance</a>
+            <a href="/analytics" class="{% if active_tab == 'analytics' %}active{% endif %}">Optimization Queries</a>
+            {% if current_user.role == 'ADMIN' %}
+            <a href="/sql-runner" class="{% if active_tab == 'sql' %}active{% endif %}">SQL Runner</a>
+            {% endif %}
+            <a href="/activity" class="{% if active_tab == 'activity' %}active{% endif %}">Live Activity</a>
+            <span class="db-badge" title="Relational engine / NoSQL engine">SQL: {{ db_backend|upper }} &bull; NoSQL: {{ nosql_backend|upper }}</span>
+            <span class="live-indicator" id="liveIndicator" title="Statuses refresh automatically">&#9679; LIVE</span>
+            <span class="nav-user">{{ current_user.name }} <small>({{ current_user.role }})</small></span>
+            <form method="POST" action="/logout" style="display: inline;">
+                <button type="submit" class="btn btn-secondary btn-sm">Sign out</button>
+            </form>
+        </div>
+        {% endif %}
+    </nav>
+
+    <!-- Main Container Content -->
+    <main class="container">
+        {% if alert_msg %}
+            <div class="alert {% if alert_type == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                <span>{{ alert_msg }}</span>
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Academic Reference Footer -->
+    <footer>
+        <p><strong>Campus Resource Optimization System</strong> &bull; Department of Computer Science & Engineering &bull; PES University</p>
+        <p class="footer-credits">Project Contributors: Battu Rohith (PES2UG24CS264) &bull; Prateek Sharma (PES2UG24CS283)</p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

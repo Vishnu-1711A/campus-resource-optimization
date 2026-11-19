@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Campus Resources{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1>Resource Inventory Management</h1>
+        <p>Comprehensive inventory of classrooms, labs, auditoriums, computing clusters, and facilities.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('addResourceModal')">+ Add Resource</button>
+</div>
+
+<!-- Search & Filtering Toolbar -->
+<div style="background: white; padding: 1rem 1.25rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+    <input type="text" id="resourceSearch" class="form-control" style="max-width: 300px;" placeholder="Search resource name, building, room..." onkeyup="filterTable('resourceSearch', 'resourceTable')">
+    
+    <select class="form-control" style="max-width: 200px;" onchange="location.href='/resources?category_id=' + this.value">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+            <option value="{{ cat.category_id }}" {% if selected_category == cat.category_id %}selected{% endif %}>{{ cat.category_name }}</option>
+        {% endfor %}
+    </select>
+
+    <select class="form-control" style="max-width: 200px;" onchange="location.href='/resources?status=' + this.value">
+        <option value="">All Statuses</option>
+        <option value="AVAILABLE" {% if selected_status == 'AVAILABLE' %}selected{% endif %}>AVAILABLE</option>
+        <option value="BOOKED" {% if selected_status == 'BOOKED' %}selected{% endif %}>BOOKED</option>
+        <option value="MAINTENANCE" {% if selected_status == 'MAINTENANCE' %}selected{% endif %}>MAINTENANCE</option>
+        <option value="INACTIVE" {% if selected_status == 'INACTIVE' %}selected{% endif %}>INACTIVE</option>
+    </select>
+
+    {% if selected_category or selected_status %}
+        <a href="/resources" class="btn btn-secondary btn-sm">Clear Filters</a>
+    {% endif %}
+</div>
+
+<p class="live-note">Statuses update live: when a booking's end time passes, the resource switches back to <strong>AVAILABLE</strong> automatically.</p>
+
+<!-- Resource Inventory Table -->
+<div class="table-container">
+    <div class="table-header-bar">
+        <h3>Master Asset Register ({{ resources|length }} Total Assets)</h3>
+    </div>
+    <table id="resourceTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Resource Name</th>
+                <th>Category</th>
+                <th>Building & Floor</th>
+                <th>Room No</th>
+                <th>Capacity</th>
+                <th>Current Status</th>
+                <th>Availability</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in resources %}
+            {% set av = availability.get(r.resource_id, {}) %}
+            <tr data-resource-id="{{ r.resource_id }}">
+                <td>#{{ r.resource_id }}</td>
+                <td><strong>{{ r.resource_name }}</strong></td>
+                <td>{{ r.category_name }}</td>
+                <td>{{ r.building }} (Fl. {{ r.floor }})</td>
+                <td><code>{{ r.room_no }}</code></td>
+                <td>{{ r.capacity }} persons</td>
+                <td><span class="badge badge-{{ r.status|lower }} js-status">{{ r.status }}</span></td>
+                <td class="js-availability" data-free-at="{{ av.free_at or '' }}" data-next-at="{{ av.next_booking_at or '' }}" data-status="{{ r.status }}"></td>
+                <td>
+                    <form method="POST" action="/resources/update-status" style="display: inline-block;">
+                        <input type="hidden" name="resource_id" value="{{ r.resource_id }}">
+                        <select name="status" class="form-control" style="padding: 0.2rem 0.4rem; font-size: 0.8rem; width: auto; display: inline;" onchange="this.form.submit()">
+                            <option value="AVAILABLE" {% if r.status == 'AVAILABLE' %}selected{% endif %}>AVAILABLE</option>
+                            {# BOOKED is set by the booking scheduler, not by hand #}
+                            <option value="BOOKED" disabled {% if r.status == 'BOOKED' %}selected{% endif %}>BOOKED (auto)</option>
+                            <option value="MAINTENANCE" {% if r.status == 'MAINTENANCE' %}selected{% endif %}>MAINTENANCE</option>
+                            <option value="INACTIVE" {% if r.status == 'INACTIVE' %}selected{% endif %}>INACTIVE</option>
+                        </select>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal: Add New Resource -->
+<div class="modal" id="addResourceModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Campus Resource Asset</h3>
+            <button class="close-btn" onclick="closeModal('addResourceModal')">&times;</button>
+        </div>
+        <form method="POST" action="/resources/add">
+            <div class="form-group">
+                <label for="resource_name">Resource / Venue Name</label>
+                <input type="text" id="resource_name" name="resource_name" class="form-control" placeholder="e.g. Distributed Computing Lab 3" required>
+            </div>
+            <div class="form-group">
+                <label for="category_id">Category</label>
+                <select id="category_id" name="category_id" class="form-control" required>
+                    {% for cat in categories %}
+                        <option value="{{ cat.category_id }}">{{ cat.category_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="location_id">Campus Location</label>
+                <select id="location_id" name="location_id" class="form-control" required>
+                    {% for loc in locations %}
+                        <option value="{{ loc.location_id }}">{{ loc.building }} - Floor {{ loc.floor }} ({{ loc.room_no }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="capacity">Capacity (Seats / Nodes)</label>
+                <input type="number" id="capacity" name="capacity" class="form-control" min="1" value="30" required>
+            </div>
+            <div class="form-group">
+                <label for="status">Initial Status</label>
+                <select id="status" name="status" class="form-control">
+                    <option value="AVAILABLE">AVAILABLE</option>
+                    <option value="INACTIVE">INACTIVE</option>
+                </select>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addResourceModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Resource</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

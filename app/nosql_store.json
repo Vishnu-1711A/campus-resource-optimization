@@ -1,0 +1,53 @@
+{
+ "sessions": [],
+ "activity_logs": [
+  {
+   "timestamp": "2026-11-19T11:40:48.437035",
+   "action": "LOGIN",
+   "user": {
+    "user_id": 1,
+    "name": "Dr. Anuradha Bhat",
+    "role": "ADMIN"
+   },
+   "entity": "user",
+   "entity_id": 1,
+   "details": {
+    "ip": "testclient",
+    "user_agent": "testclient"
+   },
+   "_id": "255cce5313104399bf906f6c154060ed"
+  },
+  {
+   "timestamp": "2026-11-19T11:40:48.439484",
+   "action": "RESOURCE_CREATED",
+   "user": {
+    "user_id": 1,
+    "name": "Dr. Anuradha Bhat",
+    "role": "ADMIN"
+   },
+   "entity": "resource",
+   "entity_id": 13,
+   "details": {
+    "resource_name": "UI Created Lab",
+    "category_id": 1,
+    "location_id": 1,
+    "capacity": 20,
+    "status": "AVAILABLE"
+   },
+   "_id": "aa6a2587b93445ccb54c877a169955c7"
+  },
+  {
+   "timestamp": "2026-11-19T11:40:48.451553",
+   "action": "LOGOUT",
+   "user": {
+    "user_id": 1,
+    "name": "Dr. Anuradha Bhat",
+    "role": "ADMIN"
+   },
+   "entity": "user",
+   "entity_id": 1,
+   "details": {},
+   "_id": "78aad4f9ebcd4de482ca207ab220fe26"
+  }
+ ]
+}

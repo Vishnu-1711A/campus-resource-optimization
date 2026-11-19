@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Live Activity{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1>Live Activity Log (NoSQL)</h1>
+        <p>Every action on the UI is stored as a JSON document. Storage: <code>{{ nosql_note }}</code></p>
+    </div>
+</div>
+
+<div class="table-container">
+    <div class="table-header-bar">
+        <h3>Latest events (auto-refreshing)</h3>
+    </div>
+    <table id="activityTable">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Action</th>
+                <th>User</th>
+                <th>Entity</th>
+                <th>Document details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in activities %}
+            <tr>
+                <td>{{ a.timestamp }}</td>
+                <td><strong>{{ a.action }}</strong></td>
+                <td>{{ a.user.name }}{% if a.user.role %} <small>({{ a.user.role }})</small>{% endif %}</td>
+                <td>{{ a.entity or '' }}{% if a.entity_id %} #{{ a.entity_id }}{% endif %}</td>
+                <td><code class="json-cell">{{ a.details | tojson }}</code></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">No activity yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Re-render the feed from the NoSQL store every few seconds
+    setInterval(async () => {
+        const res = await fetch('/api/activity?limit=100');
+        if (!res.ok) return;
+        const rows = await res.json();
+        const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+        document.querySelector('#activityTable tbody').innerHTML = rows.map(a => `
+            <tr>
+                <td>${esc(a.timestamp)}</td>
+                <td><strong>${esc(a.action)}</strong></td>
+                <td>${esc(a.user.name)}${a.user.role ? ` <small>(${esc(a.user.role)})</small>` : ''}</td>
+                <td>${esc(a.entity)}${a.entity_id ? ' #' + esc(a.entity_id) : ''}</td>
+                <td><code class="json-cell">${esc(JSON.stringify(a.details))}</code></td>
+            </tr>`).join('') || '<tr><td colspan="5">No activity yet.</td></tr>';
+    }, 4000);
+</script>
+{% endblock %}

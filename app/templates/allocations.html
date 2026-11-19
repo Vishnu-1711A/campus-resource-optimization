@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Department Allocations{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1>Departmental Resource Allocations</h1>
+        <p>Long-term operational assignments of labs, centers, and specialized equipment to academic departments.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('newAllocationModal')">+ Allocate Resource</button>
+</div>
+
+<!-- Allocations Table -->
+<div class="table-container">
+    <div class="table-header-bar">
+        <h3>Active Departmental Allocations ({{ allocations|length }} Assignments)</h3>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Allocation ID</th>
+                <th>Department</th>
+                <th>Assigned Resource</th>
+                <th>Category</th>
+                <th>Venue Location</th>
+                <th>Valid From</th>
+                <th>Valid To</th>
+                <th>Resource Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in allocations %}
+            <tr>
+                <td>#{{ a.allocation_id }}</td>
+                <td><strong>{{ a.department_name }}</strong></td>
+                <td>{{ a.resource_name }}</td>
+                <td>{{ a.category_name }}</td>
+                <td>{{ a.location_str }}</td>
+                <td>{{ a.allocated_from }}</td>
+                <td>{{ a.allocated_to or 'Ongoing' }}</td>
+                <td><span class="badge badge-{{ a.resource_status|lower }}">{{ a.resource_status }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal: New Allocation -->
+<div class="modal" id="newAllocationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Assign Resource to Department</h3>
+            <button class="close-btn" onclick="closeModal('newAllocationModal')">&times;</button>
+        </div>
+        <form method="POST" action="/allocations/create">
+            <div class="form-group">
+                <label for="department_id">Department</label>
+                <select id="department_id" name="department_id" class="form-control" required>
+                    {% for d in departments %}
+                        <option value="{{ d.department_id }}">{{ d.department_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="resource_id">Resource</label>
+                <select id="resource_id" name="resource_id" class="form-control" required>
+                    {% for r in resources %}
+                        <option value="{{ r.resource_id }}">{{ r.resource_name }} ({{ r.category_name }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="allocated_from">Start Date</label>
+                    <input type="date" id="allocated_from" name="allocated_from" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="allocated_to">End Date (Optional)</label>
+                    <input type="date" id="allocated_to" name="allocated_to" class="form-control">
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('newAllocationModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Allocation</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
